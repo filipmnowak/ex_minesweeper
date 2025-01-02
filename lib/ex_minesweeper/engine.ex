@@ -5,13 +5,12 @@ defmodule ExMinesweeper.Engine do
   alias ExMinesweeper.Engine.State
   require State
 
-  defdelegate mark(state, x_or_o, x_and_y), to: State
+  defdelegate mark(state, mark_or_flag), to: State
 
-  def init(x_max, y_max, next_move \\ :random)
+  def init(x_max, y_max)
 
   def init(x_max, y_max, next_move)
-      when next_move in [:x, :o, :random] and
-             is_pos_integer(x_max) and
+      when is_pos_integer(x_max) and
              is_pos_integer(y_max) and
              x_max == y_max do
     State.new(x_max, y_max)

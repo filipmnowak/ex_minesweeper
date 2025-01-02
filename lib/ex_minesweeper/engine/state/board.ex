@@ -8,7 +8,9 @@ defmodule ExMinesweeper.Engine.State.Board do
 
   defstruct(
     topology: nil,
-    dimmensions: nil
+    dimmensions: nil,
+    upper_layer: nil,
+    bottom_layer: nil
   )
 
   def new(x_max, y_max) when x_max == y_max do
@@ -22,15 +24,16 @@ defmodule ExMinesweeper.Engine.State.Board do
     raise(ArgumentError, "x_max and y_max must be equal, non negative integers")
   end
 
-  def mark(board, x_or_o, {x, y}) when x_or_o in [:x, :o] and is_struct(board, __MODULE__) do
+  def mark(board, mark_or_flag, {x, y})
+      when mark_or_flag in [:mark, :flag] and is_struct(board, __MODULE__) do
     Access.get_and_update(board, :topology, fn v ->
       {
         v,
         v
-        |> MapSet.delete(%{{x, y} => :x})
-        |> MapSet.delete(%{{x, y} => :o})
+        |> MapSet.delete(%{{x, y} => :mark})
+        |> MapSet.delete(%{{x, y} => :flag})
         |> MapSet.delete(%{{x, y} => nil})
-        |> MapSet.put(%{{x, y} => x_or_o})
+        |> MapSet.put(%{{x, y} => mark_or_flag})
       }
     end)
     |> elem(1)
