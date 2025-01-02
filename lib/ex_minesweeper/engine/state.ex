@@ -10,6 +10,7 @@ defmodule ExMinesweeper.Engine.State do
   )
 
   defmacro won(), do: :won
+  defmacro lost(), do: :lost
   defmacro game_on(), do: {:game_on, nil}
   defmacro illegal_state(), do: {:illegal_state, nil}
 
