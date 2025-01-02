@@ -1,6 +1,5 @@
 defmodule ExMinesweeper.Engine.State do
   alias ExMinesweeper.Engine.State.Board
-  alias ExMinesweeper.Engine.State.Board.Helpers, as: BoardHelpers
 
   defstruct(
     phase: nil,
@@ -17,7 +16,7 @@ defmodule ExMinesweeper.Engine.State do
   def repeat_turn(), do: :repeat_turn
 
   def new(x_max, y_max) do
-    board = Board.new(x_max, y_max)
+    board = Board.new(x_max, y_max, 15)
 
     %__MODULE__{
       phase: :init,
@@ -27,8 +26,8 @@ defmodule ExMinesweeper.Engine.State do
 
   def phase(state), do: state.phase
 
-  def mark(state, mark_or_flag, {x, y}) do
-    %__MODULE__{state | board: Board.mark(state.board, mark_or_flag, {x, y})}
+  def mark(state, uncover_or_flag, {x, y}) do
+    %__MODULE__{state | board: Board.mark(state.board, uncover_or_flag, {x, y})}
   end
 
   def won?(state) do
@@ -39,6 +38,7 @@ defmodule ExMinesweeper.Engine.State do
     # board = state.board
 
     # TODO: check for winning condition
+    :won
   end
 
   def illegal?(current_state, updated_state) do

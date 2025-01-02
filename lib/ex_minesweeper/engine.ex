@@ -5,7 +5,7 @@ defmodule ExMinesweeper.Engine do
   alias ExMinesweeper.Engine.State
   require State
 
-  defdelegate mark(state, mark_or_flag), to: State
+  defdelegate mark(state, uncover_or_flag, field), to: State
 
   def init(x_max, y_max)
 
@@ -39,11 +39,9 @@ defmodule ExMinesweeper.Engine do
         %State{updated_state | phase: State.game_on()}
         |> Map.get_and_update(:turn, &{&1, &1 + 1})
         |> elem(1)
-        |> Map.get_and_update(:next_move, fn v -> {v, State.whos_turn?(v)} end)
-        |> elem(1)
 
       State.won() ->
-        %State{updated_state | phase: State.x_won()}
+        %State{updated_state | phase: State.won()}
 
       State.illegal_state() ->
         %State{state | phase: State.illegal_state()}

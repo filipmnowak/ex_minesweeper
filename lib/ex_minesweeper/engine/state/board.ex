@@ -28,8 +28,8 @@ defmodule ExMinesweeper.Engine.State.Board do
     raise(ArgumentError, "x_max and y_max must be equal, non negative integers")
   end
 
-  def mark(board, mark_or_flag, {x, y})
-      when mark_or_flag in [:mark, :flag] and is_struct(board, __MODULE__) do
+  def mark(board, uncover_or_flag, {x, y})
+      when uncover_or_flag in [:mark, :flag] and is_struct(board, __MODULE__) do
     Access.get_and_update(board, :topology, fn v ->
       {
         v,
@@ -37,7 +37,7 @@ defmodule ExMinesweeper.Engine.State.Board do
         |> MapSet.delete(%{{x, y} => :mark})
         |> MapSet.delete(%{{x, y} => :flag})
         |> MapSet.delete(%{{x, y} => nil})
-        |> MapSet.put(%{{x, y} => mark_or_flag})
+        |> MapSet.put(%{{x, y} => uncover_or_flag})
       }
     end)
     |> elem(1)
