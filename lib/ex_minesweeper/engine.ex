@@ -7,18 +7,18 @@ defmodule ExMinesweeper.Engine do
 
   defdelegate mark(state, uncover_or_flag, field), to: State
 
-  def init(x_max, y_max)
+  def init(x_max, y_max, mine_chance)
 
-  def init(x_max, y_max)
+  def init(x_max, y_max, mine_chance)
       when is_pos_integer(x_max) and
              is_pos_integer(y_max) and
              x_max == y_max do
-    State.new(x_max, y_max)
+    State.new(x_max, y_max, mine_chance)
     |> Map.put(:turn, 1)
     |> Map.put(:phase, State.game_on())
   end
 
-  def init(_x_max, _y_max, _next_move) do
+  def init(_x_max, _y_max, _mine_chance) do
     {:err, :bad_args}
   end
 

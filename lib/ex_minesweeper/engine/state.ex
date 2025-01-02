@@ -1,27 +1,28 @@
 defmodule ExMinesweeper.Engine.State do
   alias ExMinesweeper.Engine.State.Board
 
+  @type t :: %__MODULE__{phase: atom(), board: Board.t(), blank_board: Board.t()}
   defstruct(
     phase: nil,
     turn: nil,
     board: nil,
-    blank_board: nil,
-    time: nil
+    blank_board: nil
   )
 
   defmacro won(), do: :won
   defmacro lost(), do: :lost
-  defmacro game_on(), do: {:game_on, nil}
-  defmacro illegal_state(), do: {:illegal_state, nil}
+  defmacro game_on(), do: :game_on
+  defmacro illegal_state(), do: :illegal_state
 
   def repeat_turn(), do: :repeat_turn
 
-  def new(x_max, y_max) do
-    board = Board.new(x_max, y_max, 15)
+  def new(x_max, y_max, mine_chance) do
+    board = Board.new(x_max, y_max, mine_chance)
 
     %__MODULE__{
       phase: :init,
-      board: board
+      board: board,
+      blank_board: board
     }
   end
 
@@ -31,19 +32,30 @@ defmodule ExMinesweeper.Engine.State do
     %__MODULE__{state | board: Board.mark(state.board, uncover_or_flag, {x, y})}
   end
 
+  @spec won?(t()) :: :won | false
   def won?(state) do
-    _won?(state)
-  end
+    upper_layer_flagged = MapSet.to_list(state.board.upper_layer) |> Enum.filter(fn e -> Map.values(e) === [:flagged] end)
+    bottom_layer_flagged = MapSet.to_list(state.board.bottom_layer) |> Enum.filter(fn e -> Map.values(e) === [:mine] end)
 
-  defp _won?(_state) do
-    # board = state.board
+    cond do
+      length(upper_layer_flagged) != length(bottom_layer_flagged) ->
+        false
 
-    # TODO: check for winning condition
-    :won
+      MapSet.equal?(
+        Enum.map(upper_layer_flagged, fn e -> Map.keys(e) |> List.first() end) |> MapSet.new(),
+        Enum.map(bottom_layer_flagged, fn e -> Map.keys(e) |> List.first() end) |> MapSet.new()
+      ) ->
+        :won
+
+      true ->
+        false
+    end
   end
 
   def illegal?(current_state, updated_state) do
     {current_board, updated_board} = {current_state.board, updated_state.board}
+    {current_upper_layer, updated_upper_layer} = {current_board.upper_layer, updated_board.upper_layer}
+    {current_bottom_layer, updated_bottom_layer} = {current_board.bottom_layer, updated_board.bottom_layer}
     blank_board = current_state.blank_board
     diff = MapSet.difference(updated_board.topology, current_board.topology)
 
@@ -56,7 +68,7 @@ defmodule ExMinesweeper.Engine.State do
       MapSet.size(diff) == 0 ->
         illegal_state()
 
-      # possibly new field added
+      # possibly new field added or removed
       MapSet.size(current_board.topology) != MapSet.size(updated_board.topology) ->
         illegal_state()
 
@@ -68,7 +80,7 @@ defmodule ExMinesweeper.Engine.State do
       ) === false ->
         illegal_state()
 
-      diff ->
+      true ->
         false
     end
   end
