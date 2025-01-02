@@ -9,13 +9,12 @@ defmodule ExMinesweeper.Engine do
 
   def init(x_max, y_max)
 
-  def init(x_max, y_max, next_move)
+  def init(x_max, y_max)
       when is_pos_integer(x_max) and
              is_pos_integer(y_max) and
              x_max == y_max do
     State.new(x_max, y_max)
     |> Map.put(:turn, 1)
-    |> Map.put(:next_move, (next_move == :random && State.whos_turn?()) || next_move)
     |> Map.put(:phase, State.game_on())
   end
 
@@ -24,7 +23,7 @@ defmodule ExMinesweeper.Engine do
   end
 
   def progress_game(%State{phase: phase} = state, _)
-      when phase in [State.draw(), State.x_won(), State.o_won()] do
+      when phase in [State.won()] do
     state
   end
 
@@ -43,14 +42,8 @@ defmodule ExMinesweeper.Engine do
         |> Map.get_and_update(:next_move, fn v -> {v, State.whos_turn?(v)} end)
         |> elem(1)
 
-      State.x_won() ->
+      State.won() ->
         %State{updated_state | phase: State.x_won()}
-
-      State.o_won() ->
-        %State{updated_state | phase: State.o_won()}
-
-      State.draw() ->
-        %State{updated_state | phase: State.draw()}
 
       State.illegal_state() ->
         %State{state | phase: State.illegal_state()}

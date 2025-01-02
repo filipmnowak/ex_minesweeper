@@ -2,20 +2,24 @@ defmodule ExMinesweeper.Engine.State.Board do
   use ExMinesweeper.Engine.State.Board.Access
   use ExMinesweeper.Types
 
-  import ExMinesweeper.Engine.State.Board.Helpers, only: [_generate_fields: 2]
+  import ExMinesweeper.Engine.State.Board.Helpers,
+    only: [
+      _generate_upper_layer_fields: 2,
+      _generate_bottom_layer_fields: 3
+    ]
 
   alias __MODULE__
 
   defstruct(
-    topology: nil,
     dimmensions: nil,
     upper_layer: nil,
     bottom_layer: nil
   )
 
-  def new(x_max, y_max) when x_max == y_max do
+  def new(x_max, y_max, mine_chance) when x_max == y_max do
     %Board{
-      topology: MapSet.new(_generate_fields(x_max, y_max)),
+      upper_layer: MapSet.new(_generate_upper_layer_fields(x_max, y_max)),
+      bottom_layer: MapSet.new(_generate_bottom_layer_fields(x_max, y_max, mine_chance)),
       dimmensions: %{x: x_max, y: y_max}
     }
   end
