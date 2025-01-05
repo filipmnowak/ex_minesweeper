@@ -32,6 +32,14 @@ defmodule ExMinesweeper.Engine.State do
     %__MODULE__{state | board: Board.mark(state.board, uncover_or_flag, {x, y})}
   end
 
+  @spec lost?(t()) :: :won | false
+  def lost?(state) do
+    cond do
+      true ->
+        false
+    end
+  end
+
   @spec won?(t()) :: :won | false
   def won?(state) do
     upper_layer_flagged = MapSet.to_list(state.board.upper_layer) |> Enum.filter(fn e -> Map.values(e) === [:flagged] end)
@@ -54,30 +62,36 @@ defmodule ExMinesweeper.Engine.State do
 
   def illegal?(current_state, updated_state) do
     {current_board, updated_board} = {current_state.board, updated_state.board}
-    {current_upper_layer, updated_upper_layer} = {current_board.upper_layer, updated_board.upper_layer}
-    {current_bottom_layer, updated_bottom_layer} = {current_board.bottom_layer, updated_board.bottom_layer}
+    {current_upper_layer, current_bottom_layer} = {current_board.upper_layer, current_board.bottom_layer}
+    {updated_upper_layer, updated_bottom_layer} = {updated_board.upper_layer, updated_board.bottom_layer}
     blank_board = current_state.blank_board
-    diff = MapSet.difference(updated_board.topology, current_board.topology)
+    upper_layer_diff = MapSet.difference(current_upper_layer, updated_upper_layer)
+    bottom_layer_diff = MapSet.difference(current_bottom_layer, updated_bottom_layer)
 
     cond do
       # too many changes at once
-      MapSet.size(diff) > 1 ->
+      MapSet.size(upper_layer_diff) > 1 or MapSet.size(bottom_layer_diff) > 1 ->
         illegal_state()
 
       # no changes
-      MapSet.size(diff) == 0 ->
+      MapSet.size(upper_layer_diff) === 0 or MapSet.size(bottom_layer_diff) === 0 ->
         illegal_state()
 
       # possibly new field added or removed
-      MapSet.size(current_board.topology) != MapSet.size(updated_board.topology) ->
+      MapSet.size(current_upper_layer) != MapSet.size(current_upper_layer) or
+          MapSet.size(current_bottom_layer) != MapSet.size(current_bottom_layer) ->
         illegal_state()
 
       # set of all marked fields from the current board, needs to be a subset of all marked fields in
       # the updated board. marked fields can't be changed.
       MapSet.subset?(
-        MapSet.difference(current_board.topology, blank_board.topology),
-        MapSet.difference(updated_board.topology, blank_board.topology)
-      ) === false ->
+        MapSet.difference(current_upper_layer, blank_board.upper_layer),
+        MapSet.difference(updated_upper_layer, blank_board.bottom_layer)
+      ) and
+          MapSet.subset?(
+            MapSet.difference(current_bottom_layer, blank_board.upper_layer),
+            MapSet.difference(updated_bottom_layer, blank_board.bottom_layer)
+          ) === false ->
         illegal_state()
 
       true ->
@@ -86,6 +100,6 @@ defmodule ExMinesweeper.Engine.State do
   end
 
   def state(current_state, updated_state) do
-    illegal?(current_state, updated_state) || won?(updated_state) || game_on()
+    illegal?(current_state, updated_state) || lost?(updated_state) || won?(updated_state) || game_on()
   end
 end
