@@ -23,7 +23,7 @@ defmodule ExMinesweeper.Engine do
   end
 
   def progress_game(%State{phase: phase} = state, _)
-      when phase in [State.won()] do
+      when phase in [State.won(), State.lost()] do
     state
   end
 
@@ -45,6 +45,8 @@ defmodule ExMinesweeper.Engine do
 
       State.illegal_state() ->
         %State{state | phase: State.illegal_state()}
+      State.lost() ->
+        %State{state | phase: State.lost()}
     end
   end
 end
