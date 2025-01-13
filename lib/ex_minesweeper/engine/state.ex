@@ -1,5 +1,5 @@
 defmodule ExMinesweeper.Engine.State do
-  alias File.Stat
+  use ExMinesweeper.Engine.State.Access
   alias ExMinesweeper.Engine.State.Board
 
   @type t :: %__MODULE__{phase: atom(), board: Board.t(), blank_board: Board.t()}
@@ -140,11 +140,10 @@ defmodule ExMinesweeper.Engine.State do
           updated_state,
           [:board, :upper_layer],
           fn ms ->
-            MapSet.delete(ms, %{{updated_upper_x, updated_upper_y} => :covered})
+            MapSet.delete(ms, %{{updated_upper_x, updated_upper_y} => :flag})
             |> MapSet.put(%{{updated_upper_x, updated_upper_y} => :flagged})
           end
         )
-        |> elem(1)
 
       # unset unset 
       updated_upper_field === :flag and current_upper_field === :flagged ->
@@ -156,7 +155,6 @@ defmodule ExMinesweeper.Engine.State do
             |> MapSet.put(%{{updated_upper_x, updated_upper_y} => :covered})
           end
         )
-        |> elem(1)
     end
   end
 
