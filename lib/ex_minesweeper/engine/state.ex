@@ -133,7 +133,14 @@ defmodule ExMinesweeper.Engine.State do
           raise("invalid state")
       end
 
-    _sync_layers(updated_upper_field, current_upper_field, current_bottom_field, updated_state, updated_upper_x, updated_upper_y)
+    _sync_layers(
+      updated_upper_field,
+      current_upper_field,
+      current_bottom_field,
+      updated_state,
+      updated_upper_x,
+      updated_upper_y
+    )
   end
 
   def _sync_layers(updated_upper_field, current_upper_field, current_bottom_field, state, updated_upper_x, updated_upper_y)
@@ -163,12 +170,25 @@ defmodule ExMinesweeper.Engine.State do
   end
 
   def _sync_layers(:uncover, :covered, :clean, updated_state, x, y) do
+    # uncover clean
     update_in(
       updated_state,
       [:board, :upper_layer],
       fn ms ->
         MapSet.delete(ms, %{{x, y} => :uncover})
         |> MapSet.put(%{{x, y} => :clean})
+      end
+    )
+  end
+
+  def _sync_layers(:uncover, :covered, :mine, updated_state, x, y) do
+    # uncover mine
+    update_in(
+      updated_state,
+      [:board, :upper_layer],
+      fn ms ->
+        MapSet.delete(ms, %{{x, y} => :uncover})
+        |> MapSet.put(%{{x, y} => :explosion})
       end
     )
   end
