@@ -104,7 +104,7 @@ defmodule ExMinesweeper.Engine.State do
 
     # get coordinate-matching current upper layer field
     # :explosion should no happen here
-    [{{current_upper_x, current_upper_y}, current_upper_field}] =
+    [{{_current_upper_x, _current_upper_y}, current_upper_field}] =
       cond do
         MapSet.member?(current_state.board.upper_layer, %{{updated_upper_x, updated_upper_y} => :covered}) ->
           [{{updated_upper_x, updated_upper_y}, :covered}]
@@ -121,41 +121,56 @@ defmodule ExMinesweeper.Engine.State do
 
     # get coordinate-matching current bottom layer field
     # :explosion should no happen here
-    [{{current_bottom_x, current_bottom_y}, current_bottom_field}] =
+    [{{_current_bottom_x, _current_bottom_y}, current_bottom_field}] =
       cond do
         MapSet.member?(current_state.board.bottom_layer, %{{updated_upper_x, updated_upper_y} => :clean}) ->
-          [{{updated_upper_x, updated_upper_y}, :covered}]
+          [{{updated_upper_x, updated_upper_y}, :clean}]
 
         MapSet.member?(current_state.board.bottom_layer, %{{updated_upper_x, updated_upper_y} => :mine}) ->
-          [{{updated_upper_x, updated_upper_y}, :flagged}]
+          [{{updated_upper_x, updated_upper_y}, :mine}]
 
         true ->
           raise("invalid state")
       end
 
-    cond do
-      # set flag
-      updated_upper_field === :flag and current_upper_field === :covered ->
-        update_in(
-          updated_state,
-          [:board, :upper_layer],
-          fn ms ->
-            MapSet.delete(ms, %{{updated_upper_x, updated_upper_y} => :flag})
-            |> MapSet.put(%{{updated_upper_x, updated_upper_y} => :flagged})
-          end
-        )
+    _sync_layers(updated_upper_field, current_upper_field, current_bottom_field, updated_state, updated_upper_x, updated_upper_y)
+  end
 
-      # unset unset 
-      updated_upper_field === :flag and current_upper_field === :flagged ->
-        update_in(
-          updated_state,
-          [:board, :upper_layer],
-          fn ms ->
-            MapSet.delete(ms, %{{updated_upper_x, updated_upper_y} => :flag})
-            |> MapSet.put(%{{updated_upper_x, updated_upper_y} => :covered})
-          end
-        )
-    end
+  def _sync_layers(updated_upper_field, current_upper_field, current_bottom_field, state, updated_upper_x, updated_upper_y)
+
+  def _sync_layers(:flag, :covered, _, updated_state, x, y) do
+    # set flag
+    update_in(
+      updated_state,
+      [:board, :upper_layer],
+      fn ms ->
+        MapSet.delete(ms, %{{x, y} => :flag})
+        |> MapSet.put(%{{x, y} => :flagged})
+      end
+    )
+  end
+
+  def _sync_layers(:flag, :flagged, _, updated_state, x, y) do
+    # unset flag
+    update_in(
+      updated_state,
+      [:board, :upper_layer],
+      fn ms ->
+        MapSet.delete(ms, %{{x, y} => :flag})
+        |> MapSet.put(%{{x, y} => :covered})
+      end
+    )
+  end
+
+  def _sync_layers(:uncover, :covered, :clean, updated_state, x, y) do
+    update_in(
+      updated_state,
+      [:board, :upper_layer],
+      fn ms ->
+        MapSet.delete(ms, %{{x, y} => :uncover})
+        |> MapSet.put(%{{x, y} => :clean})
+      end
+    )
   end
 
   def state(current_state, updated_state) do
