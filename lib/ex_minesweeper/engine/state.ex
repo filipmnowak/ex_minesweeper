@@ -43,16 +43,16 @@ defmodule ExMinesweeper.Engine.State do
 
   @spec won?(t()) :: :won | false
   def won?(state) do
-    upper_layer_flagged = MapSet.to_list(state.board.upper_layer) |> Enum.filter(fn e -> Map.values(e) === [:flagged] end)
-    bottom_layer_flagged = MapSet.to_list(state.board.bottom_layer) |> Enum.filter(fn e -> Map.values(e) === [:mine] end)
+    upper_layer_flagged = MapSet.to_list(state.board.upper_layer) |> Enum.filter(fn {_, _, v} -> v === :flagged end)
+    bottom_layer_flagged = MapSet.to_list(state.board.bottom_layer) |> Enum.filter(fn {_, _, v} -> v === :mine end)
 
     cond do
       length(upper_layer_flagged) != length(bottom_layer_flagged) ->
         false
 
       MapSet.equal?(
-        Enum.map(upper_layer_flagged, fn e -> Map.keys(e) |> List.first() end) |> MapSet.new(),
-        Enum.map(bottom_layer_flagged, fn e -> Map.keys(e) |> List.first() end) |> MapSet.new()
+        Enum.map(upper_layer_flagged, fn {x, y, _} -> {x, y} end) |> MapSet.new(),
+        Enum.map(bottom_layer_flagged, fn {x, y, _} -> {x, y} end) |> MapSet.new()
       ) ->
         :won
 
@@ -90,30 +90,32 @@ defmodule ExMinesweeper.Engine.State do
         illegal_state()
 
       true ->
-        false
+        _illegal()
     end
+  end
+
+  # TODO
+  def _illegal() do
   end
 
   @spec sync_layers(t(), t()) :: t()
   def sync_layers(updated_state, current_state) do
-    [{{updated_upper_x, updated_upper_y}, updated_upper_field}] =
+    [{updated_upper_x, updated_upper_y, updated_upper_field}] =
       MapSet.difference(updated_state.board.upper_layer, current_state.board.upper_layer)
       |> MapSet.to_list()
-      |> List.first()
-      |> Map.to_list()
 
     # get coordinate-matching current upper layer field
     # :explosion should no happen here
-    [{{_current_upper_x, _current_upper_y}, current_upper_field}] =
+    {_current_upper_x, _current_upper_y, current_upper_field} =
       cond do
-        MapSet.member?(current_state.board.upper_layer, %{{updated_upper_x, updated_upper_y} => :covered}) ->
-          [{{updated_upper_x, updated_upper_y}, :covered}]
+        MapSet.member?(current_state.board.upper_layer, {updated_upper_x, updated_upper_y, :covered}) ->
+          {updated_upper_x, updated_upper_y, :covered}
 
-        MapSet.member?(current_state.board.upper_layer, %{{updated_upper_x, updated_upper_y} => :flagged}) ->
-          [{{updated_upper_x, updated_upper_y}, :flagged}]
+        MapSet.member?(current_state.board.upper_layer, {updated_upper_x, updated_upper_y, :flagged}) ->
+          {updated_upper_x, updated_upper_y, :flagged}
 
-        MapSet.member?(current_state.board.upper_layer, %{{updated_upper_x, updated_upper_y} => :clean}) ->
-          [{{updated_upper_x, updated_upper_y}, :clean}]
+        MapSet.member?(current_state.board.upper_layer, {updated_upper_x, updated_upper_y, :clean}) ->
+          {updated_upper_x, updated_upper_y, :clean}
 
         true ->
           raise("invalid state")
@@ -121,13 +123,13 @@ defmodule ExMinesweeper.Engine.State do
 
     # get coordinate-matching current bottom layer field
     # :explosion should no happen here
-    [{{_current_bottom_x, _current_bottom_y}, current_bottom_field}] =
+    {_current_bottom_x, _current_bottom_y, current_bottom_field} =
       cond do
-        MapSet.member?(current_state.board.bottom_layer, %{{updated_upper_x, updated_upper_y} => :clean}) ->
-          [{{updated_upper_x, updated_upper_y}, :clean}]
+        MapSet.member?(current_state.board.bottom_layer, {updated_upper_x, updated_upper_y, :clean}) ->
+          {updated_upper_x, updated_upper_y, :clean}
 
-        MapSet.member?(current_state.board.bottom_layer, %{{updated_upper_x, updated_upper_y} => :mine}) ->
-          [{{updated_upper_x, updated_upper_y}, :mine}]
+        MapSet.member?(current_state.board.bottom_layer, {updated_upper_x, updated_upper_y, :mine}) ->
+          {updated_upper_x, updated_upper_y, :mine}
 
         true ->
           raise("invalid state")

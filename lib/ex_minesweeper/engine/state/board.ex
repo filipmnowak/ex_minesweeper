@@ -45,14 +45,14 @@ defmodule ExMinesweeper.Engine.State.Board do
       {
         v,
         v
-        |> MapSet.delete(%{{x, y} => :covered})
-        |> MapSet.delete(%{{x, y} => :flag})
-        |> MapSet.delete(%{{x, y} => :flagged})
-        |> MapSet.delete(%{{x, y} => :uncover})
-        |> MapSet.delete(%{{x, y} => :clean})
-        |> MapSet.delete(%{{x, y} => :mine})
-        |> MapSet.delete(%{{x, y} => :explosion})
-        |> MapSet.put(%{{x, y} => uncover_or_flag})
+        |> MapSet.delete({x, y, :covered})
+        |> MapSet.delete({x, y, :flag})
+        |> MapSet.delete({x, y, :flagged})
+        |> MapSet.delete({x, y, :uncover})
+        |> MapSet.delete({x, y, :clean})
+        |> MapSet.delete({x, y, :mine})
+        |> MapSet.delete({x, y, :explosion})
+        |> MapSet.put({x, y, uncover_or_flag})
       }
     end)
     |> elem(1)
