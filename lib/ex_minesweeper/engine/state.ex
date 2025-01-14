@@ -35,9 +35,9 @@ defmodule ExMinesweeper.Engine.State do
 
   @spec lost?(t()) :: :lost | false
   def lost?(state) do
-    cond do
-      true ->
-        false
+    # instead of it it would probably be better to evaluate last changed field
+    if MapSet.filter(state.board.upper_layer, fn {_, _, v} -> v === :explosion end) |> MapSet.size() != 0 do
+      :lost
     end
   end
 
@@ -153,8 +153,8 @@ defmodule ExMinesweeper.Engine.State do
       updated_state,
       [:board, :upper_layer],
       fn ms ->
-        MapSet.delete(ms, %{{x, y} => :flag})
-        |> MapSet.put(%{{x, y} => :flagged})
+        MapSet.delete(ms, {x, y, :flag})
+        |> MapSet.put({x, y, :flagged})
       end
     )
   end
@@ -165,8 +165,8 @@ defmodule ExMinesweeper.Engine.State do
       updated_state,
       [:board, :upper_layer],
       fn ms ->
-        MapSet.delete(ms, %{{x, y} => :flag})
-        |> MapSet.put(%{{x, y} => :covered})
+        MapSet.delete(ms, {x, y, :flag})
+        |> MapSet.put({x, y, :covered})
       end
     )
   end
@@ -177,8 +177,8 @@ defmodule ExMinesweeper.Engine.State do
       updated_state,
       [:board, :upper_layer],
       fn ms ->
-        MapSet.delete(ms, %{{x, y} => :uncover})
-        |> MapSet.put(%{{x, y} => :clean})
+        MapSet.delete(ms, {x, y, :uncover})
+        |> MapSet.put({x, y, :clean})
       end
     )
   end
@@ -189,8 +189,8 @@ defmodule ExMinesweeper.Engine.State do
       updated_state,
       [:board, :upper_layer],
       fn ms ->
-        MapSet.delete(ms, %{{x, y} => :uncover})
-        |> MapSet.put(%{{x, y} => :explosion})
+        MapSet.delete(ms, {x, y, :uncover})
+        |> MapSet.put({x, y, :explosion})
       end
     )
   end
