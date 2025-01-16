@@ -1,4 +1,5 @@
 defmodule ExMinesweeper.Engine.State do
+  use ExMinesweeper.Types
   use ExMinesweeper.Engine.State.Access
   alias ExMinesweeper.Engine.State.Board
 
@@ -173,11 +174,7 @@ defmodule ExMinesweeper.Engine.State do
         |> MapSet.put({x, y, :clean})
       end
     )
-    |> uncover_clean_neighbors({x, y, :clean})
-  end
-
-  def uncover_clean_neighbors(state, _field) do
-    state
+    |> _uncover_clean_neighbors({x, y, :clean})
   end
 
   def _sync_layers(:uncover, :covered, :mine, updated_state, x, y) do
@@ -189,6 +186,27 @@ defmodule ExMinesweeper.Engine.State do
         MapSet.delete(ms, {x, y, :uncover})
         |> MapSet.put({x, y, :explosion})
       end
+    )
+  end
+
+  def _uncover_clean_neighbors(state, _field) do
+    state
+  end
+
+  @spec _clean_neighbors(t(), bottom_layer_field()) :: MapSet.t(bottom_layer_field())
+  def _clean_neighbors(state, {x, y, _v} = _field) do
+    MapSet.intersection(
+      MapSet.new([
+        {x - 1, y, :clean},
+        {x + 1, y, :clean},
+        {x, y - 1, :clean},
+        {x, y + 1, :clean},
+        {x - 1, y - 1, :clean},
+        {x + 1, y + 1, :clean},
+        {x + 1, y - 1, :clean},
+        {x - 1, y + 1, :clean}
+      ]),
+      state.board.bottom_layer
     )
   end
 
