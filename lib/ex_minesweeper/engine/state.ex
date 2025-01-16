@@ -189,25 +189,21 @@ defmodule ExMinesweeper.Engine.State do
     )
   end
 
-  def _uncover_clean_neighbors(state, _field) do
-    state
+  def _uncover_clean_neighbors(state, field) do
+    _clean_neighbors(state, field)
   end
 
-  @spec _clean_neighbors(t(), bottom_layer_field()) :: MapSet.t(bottom_layer_field())
+  @spec _clean_neighbors(t(), bottom_layer_field()) :: [bottom_layer_field()]
   def _clean_neighbors(state, {x, y, _v} = _field) do
     MapSet.intersection(
       MapSet.new([
         {x - 1, y, :clean},
         {x + 1, y, :clean},
         {x, y - 1, :clean},
-        {x, y + 1, :clean},
-        {x - 1, y - 1, :clean},
-        {x + 1, y + 1, :clean},
-        {x + 1, y - 1, :clean},
-        {x - 1, y + 1, :clean}
+        {x, y + 1, :clean}
       ]),
       state.board.bottom_layer
-    )
+    ) |> MapSet.to_list()
   end
 
   def state(current_state, updated_state) do
