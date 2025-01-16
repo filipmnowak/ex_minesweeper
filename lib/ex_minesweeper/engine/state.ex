@@ -65,7 +65,6 @@ defmodule ExMinesweeper.Engine.State do
   def illegal?(current_state, updated_state) do
     {current_board, updated_board} = {current_state.board, updated_state.board}
     {current_upper_layer, updated_upper_layer} = {current_board.upper_layer, updated_board.upper_layer}
-    blank_board = current_state.blank_board
     upper_layer_diff = MapSet.difference(current_upper_layer, updated_upper_layer)
 
     cond do
@@ -78,15 +77,7 @@ defmodule ExMinesweeper.Engine.State do
         illegal_state()
 
       # possibly new field added or removed
-      MapSet.size(current_upper_layer) != MapSet.size(current_upper_layer) ->
-        illegal_state()
-
-      # set of all marked fields from the current board, needs to be a subset of all marked fields in
-      # the updated board. marked fields can't be changed.
-      MapSet.subset?(
-        MapSet.difference(current_upper_layer, blank_board.upper_layer),
-        MapSet.difference(updated_upper_layer, blank_board.upper_layer)
-      ) === false ->
+      MapSet.size(updated_upper_layer) != MapSet.size(current_upper_layer) ->
         illegal_state()
 
       true ->
@@ -96,6 +87,7 @@ defmodule ExMinesweeper.Engine.State do
 
   # TODO
   def _illegal() do
+    false
   end
 
   @spec sync_layers(t(), t()) :: t()
@@ -181,6 +173,11 @@ defmodule ExMinesweeper.Engine.State do
         |> MapSet.put({x, y, :clean})
       end
     )
+    |> uncover_clean_neighbors({x, y, :clean})
+  end
+
+  def uncover_clean_neighbors(state, _field) do
+    state
   end
 
   def _sync_layers(:uncover, :covered, :mine, updated_state, x, y) do
@@ -196,7 +193,7 @@ defmodule ExMinesweeper.Engine.State do
   end
 
   def state(current_state, updated_state) do
-    illegal?(current_state, updated_state) || sync_layers(current_state, updated_state) |> lost?() || won?(updated_state) ||
+    illegal?(current_state, updated_state) || sync_layers(updated_state, current_state) |> lost?() || won?(updated_state) ||
       game_on()
   end
 end
