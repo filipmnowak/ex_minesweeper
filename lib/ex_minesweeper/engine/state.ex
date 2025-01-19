@@ -193,17 +193,36 @@ defmodule ExMinesweeper.Engine.State do
     _clean_neighbors(state, field)
   end
 
-  @spec _clean_neighbors(t(), bottom_layer_field()) :: [bottom_layer_field()]
-  def _clean_neighbors(state, {x, y, _v} = _field) do
+  @spec _clean_neighbors(bottom_layer_field(), t()) :: [bottom_layer_field()]
+  def _clean_neighbors({x, y, v}, state) do
+    _clean_neighbors([{x, y, v}], state)
+  end
+
+  @spec _clean_neighbors(list(bottom_layer_field()), t()) :: [bottom_layer_field()]
+  def _clean_neighbors([{x, y, _v}] = _acc, state) do
+    bottom_layer_clean_neighbors =
+      MapSet.intersection(
+        MapSet.new([
+          {x - 1, y, :clean},
+          {x + 1, y, :clean},
+          {x, y - 1, :clean},
+          {x, y + 1, :clean}
+        ]),
+        state.board.bottom_layer
+      )
+
     MapSet.intersection(
-      MapSet.new([
-        {x - 1, y, :clean},
-        {x + 1, y, :clean},
-        {x, y - 1, :clean},
-        {x, y + 1, :clean}
-      ]),
-      state.board.bottom_layer
-    ) |> MapSet.to_list()
+      MapSet.new(for v <- [:covered, :flagged], {x, y, _} <- bottom_layer_clean_neighbors |> MapSet.to_list(), do: {x, y, v}),
+      state.board.upper_layer
+    )
+  end
+
+  def _clean_neighbors([{x, y, _v} | t] = _acc, state) do
+    state
+  end
+
+  def _clean_neighbors([] = _acc, state) do
+    state
   end
 
   def state(current_state, updated_state) do
