@@ -39,23 +39,53 @@ defmodule ExMinesweeper.Engine.State.Board.Helpers do
     for x <- 0..x_max, y <- 0..y_max, do: {x, y, clean_or_mine(mine_chance)}
   end
 
-  def render_board(board) do
+  def _field_v_to_glyph(:covered), do: "#"
+  def _field_v_to_glyph(:flag), do: "f"
+  def _field_v_to_glyph(:flagged), do: "F"
+  def _field_v_to_glyph(:uncover), do: "u"
+  def _field_v_to_glyph(:clean), do: "C"
+  def _field_v_to_glyph(:mine), do: "m"
+
+  def _add_legend?(false) do
+    []
+  end
+
+  def _add_legend?(true) do
     [
-      "upper layer:",
+      ":covered -> #",
       "\n",
-      _render_layer(board.upper_layer, board.dimmensions.x + 1),
+      "   :flag -> f",
       "\n",
-      "bottom layer:",
+      ":flagged -> F",
       "\n",
-      _render_layer(board.bottom_layer, board.dimmensions.x + 1)
+      ":uncover -> u",
+      "\n",
+      "  :clean -> C",
+      "\n",
+      "   :mine -> m",
+      "\n",
+      "\n"
     ]
+  end
+
+  def render_board(board, legend \\ false) do
+    (_add_legend?(legend) ++
+       [
+         "upper layer:",
+         "\n",
+         _render_layer(board.upper_layer, board.dimmensions.x + 1),
+         "\n",
+         "bottom layer:",
+         "\n",
+         _render_layer(board.bottom_layer, board.dimmensions.x + 1)
+       ])
     |> List.to_string()
   end
 
   def _render_layer(layer, size) do
     for l <- layer |> MapSet.to_list() |> Enum.chunk_every(size) do
       for {_, _, v} <- l do
-        (Atom.to_string(v) |> String.first()) <> " "
+        _field_v_to_glyph(v) <> " "
       end ++ ["\n"]
     end
   end
