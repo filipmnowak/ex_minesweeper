@@ -38,4 +38,25 @@ defmodule ExMinesweeper.Engine.State.Board.Helpers do
       when is_non_neg_integer(x_max) and is_non_neg_integer(y_max) do
     for x <- 0..x_max, y <- 0..y_max, do: {x, y, clean_or_mine(mine_chance)}
   end
+
+  def render_board(board) do
+    [
+      "upper layer:",
+      "\n",
+      _render_layer(board.upper_layer, board.dimmensions.x + 1),
+      "\n",
+      "bottom layer:",
+      "\n",
+      _render_layer(board.bottom_layer, board.dimmensions.x + 1)
+    ]
+    |> List.to_string()
+  end
+
+  def _render_layer(layer, size) do
+    for l <- layer |> MapSet.to_list() |> Enum.chunk_every(size) do
+      for {_, _, v} <- l do
+        (Atom.to_string(v) |> String.first()) <> " "
+      end ++ ["\n"]
+    end
+  end
 end
