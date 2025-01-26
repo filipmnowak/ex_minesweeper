@@ -211,14 +211,60 @@ defmodule ExMinesweeper.Engine.State do
         state.board.bottom_layer
       )
 
-    MapSet.intersection(
-      MapSet.new(for v <- [:covered, :flagged], {x, y, _} <- bottom_layer_clean_neighbors |> MapSet.to_list(), do: {x, y, v}),
-      state.board.upper_layer
-    )
+    upper_layer_covered_or_flagged_neighbors =
+      MapSet.intersection(
+        MapSet.new(for v <- [:covered, :flagged], {x, y, _} <- bottom_layer_clean_neighbors |> MapSet.to_list(), do: {x, y, v}),
+        state.board.upper_layer
+      )
+
+    # mark covered and flagged upper layer neighboring fields as clean if corresponding bottom layer fields are clean.
+    new_upper_layer =
+      MapSet.symmetric_difference(upper_layer_covered_or_flagged_neighbors, state.board.upper_layer)
+      |> MapSet.union(
+        Enum.map(
+          upper_layer_covered_or_flagged_neighbors |> MapSet.to_list(),
+          fn {x, y, _} -> {x, y, :clean} end
+        )
+        |> MapSet.new()
+      )
+
+    upper_layer_covered_or_flagged_neighbors
+    |> MapSet.to_list()
+    |> _clean_neighbors(update_in(state, [:board, :upper_layer], fn _ -> new_upper_layer end))
   end
 
   def _clean_neighbors([{x, y, _v} | t] = _acc, state) do
-    state
+    bottom_layer_clean_neighbors =
+      MapSet.intersection(
+        MapSet.new([
+          {x - 1, y, :clean},
+          {x + 1, y, :clean},
+          {x, y - 1, :clean},
+          {x, y + 1, :clean}
+        ]),
+        state.board.bottom_layer
+      )
+
+    upper_layer_covered_or_flagged_neighbors =
+      MapSet.intersection(
+        MapSet.new(for v <- [:covered, :flagged], {x, y, _} <- bottom_layer_clean_neighbors |> MapSet.to_list(), do: {x, y, v}),
+        state.board.upper_layer
+      )
+
+    # mark covered and flagged upper layer neighboring fields as clean if corresponding bottom layer fields are clean.
+    new_upper_layer =
+      MapSet.symmetric_difference(upper_layer_covered_or_flagged_neighbors, state.board.upper_layer)
+      |> MapSet.union(
+        Enum.map(
+          upper_layer_covered_or_flagged_neighbors |> MapSet.to_list(),
+          fn {x, y, _} -> {x, y, :clean} end
+        )
+        |> MapSet.new()
+      )
+
+    ((upper_layer_covered_or_flagged_neighbors
+      |> MapSet.to_list()) ++ t)
+    |> _clean_neighbors(update_in(state, [:board, :upper_layer], fn _ -> new_upper_layer end))
   end
 
   def _clean_neighbors([] = _acc, state) do

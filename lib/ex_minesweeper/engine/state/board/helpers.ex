@@ -52,6 +52,7 @@ defmodule ExMinesweeper.Engine.State.Board.Helpers do
 
   def _add_legend?(true) do
     [
+      "\n",
       ":covered -> #",
       "\n",
       "   :flag -> f",
@@ -83,10 +84,11 @@ defmodule ExMinesweeper.Engine.State.Board.Helpers do
   end
 
   def _render_layer(layer, size) do
-    for l <- layer |> MapSet.to_list() |> Enum.chunk_every(size) do
-      for {_, _, v} <- l do
-        _field_v_to_glyph(v) <> " "
-      end ++ ["\n"]
-    end
+    ["\n"] ++
+      for l <- layer |> MapSet.to_list() |> Enum.sort() |> Enum.chunk_every(size) do
+        for {_, _, v} <- l do
+          _field_v_to_glyph(v) <> " "
+        end ++ ["\n"]
+      end
   end
 end
