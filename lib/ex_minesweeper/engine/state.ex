@@ -34,11 +34,11 @@ defmodule ExMinesweeper.Engine.State do
     %__MODULE__{state | board: Board.mark(state.board, uncover_or_flag, {x, y})}
   end
 
-  @spec lost?(t()) :: :lost | false
+  @spec lost?(t()) :: {:lost, t()} | false
   def lost?(state) do
     # instead of it it would probably be better to evaluate last changed field
     if MapSet.filter(state.board.upper_layer, fn {_, _, v} -> v === :explosion end) |> MapSet.size() != 0 do
-      :lost
+      {:lost, state}
     end
   end
 
@@ -62,7 +62,7 @@ defmodule ExMinesweeper.Engine.State do
     end
   end
 
-  @spec illegal?(t(), t()) :: :illegal | false
+  @spec illegal?(t(), t()) :: :illegal_state | false
   def illegal?(current_state, updated_state) do
     {current_board, updated_board} = {current_state.board, updated_state.board}
     {current_upper_layer, updated_upper_layer} = {current_board.upper_layer, updated_board.upper_layer}
@@ -82,13 +82,8 @@ defmodule ExMinesweeper.Engine.State do
         illegal_state()
 
       true ->
-        _illegal()
+        false
     end
-  end
-
-  # TODO
-  def _illegal() do
-    false
   end
 
   @spec sync_layers(t(), t()) :: t()
@@ -190,7 +185,7 @@ defmodule ExMinesweeper.Engine.State do
   end
 
   def _uncover_clean_neighbors(state, field) do
-    _clean_neighbors(state, field)
+    _clean_neighbors(field, state)
   end
 
   @spec _clean_neighbors(bottom_layer_field(), t()) :: [bottom_layer_field()]
@@ -272,7 +267,20 @@ defmodule ExMinesweeper.Engine.State do
   end
 
   def state(current_state, updated_state) do
-    illegal?(current_state, updated_state) || sync_layers(updated_state, current_state) |> lost?() || won?(updated_state) ||
-      game_on()
+    new_updated_state = sync_layers(updated_state, current_state)
+
+    cond do
+      illegal?(current_state, updated_state) ->
+        illegal_state()
+
+      lost?(new_updated_state) ->
+        {lost(), new_updated_state}
+
+      won?(new_updated_state) ->
+        {won(), new_updated_state}
+
+      true ->
+        {game_on(), new_updated_state}
+    end
   end
 end

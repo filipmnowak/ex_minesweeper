@@ -35,18 +35,19 @@ defmodule ExMinesweeper.Engine do
 
   def progress_game(%State{phase: phase} = state, updated_state) when phase == State.game_on() do
     case State.state(state, updated_state) do
-      State.game_on() ->
-        %State{updated_state | phase: State.game_on()}
+      {State.game_on(), reconciled_state} ->
+        %State{reconciled_state | phase: State.game_on()}
         |> Map.get_and_update(:turn, &{&1, &1 + 1})
         |> elem(1)
 
-      State.won() ->
-        %State{updated_state | phase: State.won()}
+      {State.won(), reconciled_state} ->
+        %State{reconciled_state | phase: State.won()}
 
       State.illegal_state() ->
         %State{state | phase: State.illegal_state()}
-      State.lost() ->
-        %State{state | phase: State.lost()}
+
+      {State.lost(), reconciled_state} ->
+        %State{reconciled_state | phase: State.lost()}
     end
   end
 end
