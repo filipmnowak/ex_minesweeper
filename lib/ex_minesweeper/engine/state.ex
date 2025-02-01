@@ -44,17 +44,19 @@ defmodule ExMinesweeper.Engine.State do
 
   @spec won?(t()) :: :won | false
   def won?(state) do
+    upper_layer_clean = MapSet.to_list(state.board.upper_layer) |> Enum.filter(fn {_, _, v} -> v === :clean end)
+    bottom_layer_clean = MapSet.to_list(state.board.bottom_layer) |> Enum.filter(fn {_, _, v} -> v === :clean end)
     upper_layer_flagged = MapSet.to_list(state.board.upper_layer) |> Enum.filter(fn {_, _, v} -> v === :flagged end)
-    bottom_layer_flagged = MapSet.to_list(state.board.bottom_layer) |> Enum.filter(fn {_, _, v} -> v === :mine end)
 
     cond do
-      length(upper_layer_flagged) != length(bottom_layer_flagged) ->
-        false
-
       MapSet.equal?(
-        Enum.map(upper_layer_flagged, fn {x, y, _} -> {x, y} end) |> MapSet.new(),
-        Enum.map(bottom_layer_flagged, fn {x, y, _} -> {x, y} end) |> MapSet.new()
-      ) ->
+        Enum.map(upper_layer_clean, fn {x, y, _} -> {x, y} end) |> MapSet.new(),
+        Enum.map(bottom_layer_clean, fn {x, y, _} -> {x, y} end) |> MapSet.new()
+      ) and
+          MapSet.subset?(
+            Enum.map(upper_layer_flagged, fn {x, y, _} -> {x, y, :mine} end) |> MapSet.new(),
+            state.board.bottom_layer
+          ) ->
         :won
 
       true ->
